@@ -10,30 +10,35 @@ Local YOLOv8-seg inference → polygon upload to app.cvat.ai.
    CVAT_HOST=https://app.cvat.ai
    CVAT_USERNAME=your_username
    CVAT_PASSWORD=your_password
+   #If applicable
+   CVAT_ORG=your_org_name
    ```
 3. Activate the venv: `source .venv/bin/activate`
 
 ## Workflow
 
-```bash
-# 1. Verify model is a segmentation model with expected classes
-python verify_model.py
-
-# 2. Create the CVAT task and upload images (writes TASK_ID into .env)
-python create_task.py
-
-# 3. Run inference and upload pre-annotations
-python preannotate.py
-```
+1. Create a task in CVAT and upload your images there.
+2. Copy the task ID from the CVAT URL (e.g. `https://app.cvat.ai/tasks/12345` → ID is `12345`).
+3. Run inference and upload pre-annotations:
+   ```bash
+   python preannotate.py <task_id>
+   ```
 
 Open the task at https://app.cvat.ai → your task → Job #1 to verify and touch up.
 
 ## Tuning
 
-Override defaults via .env:
-- `CONF_THRESHOLD` (default 0.35) — lower = more polygons, more touch-up needed
-- `MAX_POLY_VERTICES` (default 150) — lower if CVAT UI lags
-- `ENFORCE_LR` (default 1) — set to 0 to disable left/right centroid swap
+Override defaults via CLI flags or `.env`:
+- `--conf` / `CONF_THRESHOLD` (default 0.35) — lower = more polygons, more touch-up needed
+- `--max-vertices` / `MAX_POLY_VERTICES` (default 150) — lower if CVAT UI lags
+- `--no-enforce-lr` / `ENFORCE_LR=0` — disable left/right centroid swap
+- `--model` / `MODEL_PATH` (default `best.pt`)
+- `--images` / `IMAGE_DIR` (default `images/`)
+
+Example:
+```bash
+python preannotate.py 12345 --conf 0.25 --max-vertices 100
+```
 
 ## Re-running
 
@@ -41,5 +46,4 @@ Override defaults via .env:
 
 For a new batch:
 1. Replace contents of `images/`
-2. Either reuse the existing task (clear `TASK_ID` and re-run `create_task.py`)
-3. Or, more commonly, create a fresh task for each batch
+2. Create a new task in CVAT, upload the new images, and run with the new task ID.

@@ -1,4 +1,5 @@
 """Run YOLOv8-seg inference on local images and upload polygons to CVAT task."""
+import argparse
 import os
 import sys
 from pathlib import Path
@@ -11,13 +12,24 @@ from cvat_sdk import make_client
 
 load_dotenv()
 
-TASK_ID = int(os.environ["TASK_ID"])
-MODEL_PATH = os.environ.get("MODEL_PATH", "best.pt")
-IMAGE_DIR = Path(os.environ.get("IMAGE_DIR", "images"))
-CONF_THRESHOLD = float(os.environ.get("CONF_THRESHOLD", "0.35"))
-MAX_POLY_VERTICES = int(os.environ.get("MAX_POLY_VERTICES", "150"))
-APPROX_EPSILON = float(os.environ.get("APPROX_EPSILON", "1.5"))
-ENFORCE_LEFT_RIGHT_BY_CENTROID = os.environ.get("ENFORCE_LR", "1") == "1"
+parser = argparse.ArgumentParser(description="Pre-annotate a CVAT task with YOLOv8-seg.")
+parser.add_argument("task_id", type=int, help="CVAT task ID")
+parser.add_argument("--model", default=os.environ.get("MODEL_PATH", "best.pt"), dest="model_path")
+parser.add_argument("--images", default=os.environ.get("IMAGE_DIR", "images"), dest="image_dir")
+parser.add_argument("--conf", type=float, default=float(os.environ.get("CONF_THRESHOLD", "0.35")))
+parser.add_argument("--max-vertices", type=int, default=int(os.environ.get("MAX_POLY_VERTICES", "150")))
+parser.add_argument("--epsilon", type=float, default=float(os.environ.get("APPROX_EPSILON", "1.5")))
+parser.add_argument("--no-enforce-lr", action="store_false", dest="enforce_lr",
+                    default=os.environ.get("ENFORCE_LR", "1") == "1")
+args = parser.parse_args()
+
+TASK_ID = args.task_id
+MODEL_PATH = args.model_path
+IMAGE_DIR = Path(args.image_dir)
+CONF_THRESHOLD = args.conf
+MAX_POLY_VERTICES = args.max_vertices
+APPROX_EPSILON = args.epsilon
+ENFORCE_LEFT_RIGHT_BY_CENTROID = args.enforce_lr
 
 # Model class name -> CVAT label name.
 # "watermelon_whole" in the model maps to "watermelon" label in CVAT.
